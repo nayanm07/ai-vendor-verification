@@ -130,11 +130,11 @@
 ## Polish (20:15–21:00)
 
 - [x] Global error handler on the server
-- [ ] Loading and error states in the frontend
+- [x] Loading and error states in the frontend
 - [x] Make 3 sample PDFs (Registration, GST, Bank), one with a deliberate name mismatch
 - [ ] Test the full flow end to end
-- [ ] Write the README: technologies, AI API, verification API, email service, database, how to run
-- [ ] Write the architecture explanation (with a simple diagram)
+- [x] Write the README: technologies, AI API, verification API, email service, database, how to run
+- [x] Write the architecture explanation (ARCHITECTURE.md)
 
 ---
 
