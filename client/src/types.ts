@@ -86,6 +86,7 @@ export interface Verification {
   result: 'VERIFIED' | 'MISMATCH' | 'UNABLE_TO_VERIFY'
   error: string | null
   createdAt: string
+  rawResponse: unknown
   details: {
     company: {
       name: string

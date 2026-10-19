@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/client'
 import { StatusBadge } from './StatusBadge'
 import { TaskList } from './TaskList'
+import { Icon } from './Icon'
 import type { Activity, ChecklistItem, EmailLog, Task, Vendor, VendorStatus } from '../types'
 
 const TRANSITION_LABELS: Record<VendorStatus, string> = {
@@ -84,19 +85,34 @@ export function ReviewTab({ vendor, onVendorChange }: Props) {
     <div>
       <div className="card">
         <h2>Verification Workflow</h2>
-        <div className="steps">
-          {STEPS.map((s, i) => (
-            <span key={s} className={`step ${vendor.status === s ? 'current' : ''}`}>
-              {i > 0 && <span className="arrow">→</span>}
-              <StatusBadge value={s} />
-            </span>
-          ))}
-          <span className="step">
+        <div className="stepper">
+          {STEPS.map((s, i) => {
+            const order = STEPS.indexOf(vendor.status as (typeof STEPS)[number])
+            const done = vendor.status !== 'REJECTED' && order > i
+            const current = vendor.status === s
+            const state = current ? 'current' : done ? 'done' : 'todo'
+            return (
+              <div key={s} className={`stepper-node ${state}`}>
+                <span className="step-dot">
+                  <Icon
+                    name={done ? 'check' : s === 'ACTION_REQUIRED' ? 'warning' : s === 'APPROVED' ? 'verified' : 'radio_button_unchecked'}
+                    size={16}
+                  />
+                </span>
+                <span className="step-label">{TRANSITION_LABELS[s].replace('Submit for ', 'Under ').replace('Mark ', '')}</span>
+              </div>
+            )
+          })}
+          <div className={`stepper-node ${vendor.status === 'REJECTED' ? 'rejected' : 'todo'}`}>
             <span className="arrow">/</span>
-            <StatusBadge value="REJECTED" />
-          </span>
+            <span className="step-dot bad">
+              <Icon name="close" size={14} />
+            </span>
+            <span className="step-label">Rejected</span>
+          </div>
         </div>
-        <p>
+        <p className="row" style={{ gap: 6 }}>
+          <span className={`dot-status ${vendor.status === 'ACTION_REQUIRED' ? 'bad' : 'ok'}`} />
           Current status: <StatusBadge value={vendor.status} />
           {vendor.status === 'ACTION_REQUIRED' && (
             <span className="muted"> · resolve the pending tasks below; the status returns to Under Review automatically</span>

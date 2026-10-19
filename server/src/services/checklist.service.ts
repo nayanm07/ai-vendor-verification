@@ -11,6 +11,16 @@ export const DOC_LABELS: Record<DocType, string> = {
   BANK: "Bank Document",
 };
 
+const FIELD_LABELS: Record<string, string> = {
+  companyName: "Company Name",
+  regNumber: "Registration Number",
+  gstNumber: "GST / Tax Number",
+  address: "Address",
+  bankAccount: "Bank Account Number",
+  ifsc: "IFSC Code",
+};
+const fieldLabel = (f: string) => FIELD_LABELS[f] ?? f;
+
 type ComparisonResult = { fields: { field: string; status: string }[] };
 
 /**
@@ -50,7 +60,7 @@ export async function getChecklist(vendorId: string) {
           status = "VERIFIED";
           reason = "All fields consistent across sources";
         } else {
-          reason = `Issues with: ${problems.join(", ")}`;
+          reason = `Issues with: ${problems.map(fieldLabel).join(", ")}`;
         }
       }
     }
