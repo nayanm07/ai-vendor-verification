@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { StatusBadge } from '../components/StatusBadge'
 import { Icon } from '../components/Icon'
@@ -25,7 +25,10 @@ export function VendorDetail() {
   const { id } = useParams<{ id: string }>()
   const [vendor, setVendor] = useState<Vendor | null>(null)
   const [error, setError] = useState('')
-  const [tab, setTab] = useState<Tab>('Details')
+  const [params, setParams] = useSearchParams()
+  const tabParam = params.get('tab') as Tab | null
+  const tab: Tab = TABS.some((t) => t.key === tabParam) ? (tabParam as Tab) : 'Details'
+  const setTab = (t: Tab) => setParams({ tab: t }, { replace: true })
   const [notice, setNotice] = useState('')
   const [docCount, setDocCount] = useState<number | null>(null)
   const [needsVerify, setNeedsVerify] = useState(false)
