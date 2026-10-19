@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: vendor-verify-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vendor
+      POSTGRES_PASSWORD: vendor
+      POSTGRES_DB: vendor_verify
+    ports:
+      - "5440:5432"
+    volumes:
+      - vendor_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vendor -d vendor_verify"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  vendor_pgdata:

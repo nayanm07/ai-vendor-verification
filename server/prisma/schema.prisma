@@ -1,0 +1,172 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum VendorStatus {
+  DRAFT
+  UNDER_REVIEW
+  ACTION_REQUIRED
+  APPROVED
+  REJECTED
+}
+
+enum DocType {
+  REGISTRATION
+  GST
+  BANK
+}
+
+enum ExtractionStatus {
+  PENDING
+  EXTRACTED
+  FAILED
+}
+
+enum VerificationResult {
+  VERIFIED
+  MISMATCH
+  UNABLE_TO_VERIFY
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum TaskStatus {
+  PENDING
+  COMPLETED
+}
+
+enum EmailStatus {
+  SENT
+  FAILED
+}
+
+model Vendor {
+  id             String       @id @default(uuid())
+  companyName    String
+  contactPerson  String
+  email          String
+  phone          String
+  address        String
+  regNumber      String
+  gstNumber      String
+  bankAccount    String
+  ifsc           String
+  status         VendorStatus @default(DRAFT)
+  currentVersion Int          @default(1)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  versions      VendorVersion[]
+  documents     Document[]
+  comparisons   Comparison[]
+  verifications Verification[]
+  tasks         Task[]
+  emailLogs     EmailLog[]
+}
+
+/// Full snapshot of vendor details at each save, plus a field-level diff vs. the previous version.
+model VendorVersion {
+  id            String   @id @default(uuid())
+  vendorId      String
+  versionNo     Int
+  snapshot      Json
+  /// [{ field, previous, next }]
+  changedFields Json
+  note          String?
+  createdAt     DateTime @default(now())
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@unique([vendorId, versionNo])
+}
+
+model Document {
+  id               String           @id @default(uuid())
+  vendorId         String
+  docType          DocType
+  originalName     String
+  filePath         String
+  mimeType         String
+  extractionStatus ExtractionStatus @default(PENDING)
+  extractedData    Json?
+  extractionError  String?
+  /// Set when a reviewer manually corrects AI-extracted values
+  editedAt         DateTime?
+  uploadedAt       DateTime         @default(now())
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId, docType])
+}
+
+/// AI cross-document comparison result.
+model Comparison {
+  id            String   @id @default(uuid())
+  vendorId      String
+  hasMismatch   Boolean
+  /// { fields: [{ field, values: { source: value }, status, note }], summary }
+  result        Json
+  createdAt     DateTime @default(now())
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+}
+
+/// External company-registry verification (OpenCorporates).
+model Verification {
+  id          String             @id @default(uuid())
+  vendorId    String
+  source      String             @default("opencorporates")
+  searchedBy  String
+  query       String
+  result      VerificationResult
+  /// Field-by-field comparison with the vendor record
+  details     Json?
+  rawResponse Json?
+  error       String?
+  createdAt   DateTime           @default(now())
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id          String       @id @default(uuid())
+  vendorId    String
+  title       String
+  description String?
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime
+  status      TaskStatus   @default(PENDING)
+  /// Dedupe key for auto-created tasks, e.g. "missing:GST" or "mismatch:api"
+  sourceKey   String?
+  createdAt   DateTime     @default(now())
+  completedAt DateTime?
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId, status])
+}
+
+model EmailLog {
+  id         String      @id @default(uuid())
+  vendorId   String
+  toEmail    String
+  subject    String
+  missingDoc DocType
+  status     EmailStatus
+  providerId String?
+  error      String?
+  sentAt     DateTime    @default(now())
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId, missingDoc])
+}
