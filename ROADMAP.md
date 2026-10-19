@@ -132,7 +132,7 @@
 - [x] Global error handler on the server
 - [x] Loading and error states in the frontend
 - [x] Make 3 sample PDFs (Registration, GST, Bank), one with a deliberate name mismatch
-- [ ] Test the full flow end to end
+- [x] Test the full flow end to end (API checks + automated browser run)
 - [x] Write the README: technologies, AI API, verification API, email service, database, how to run
 - [x] Write the architecture explanation (ARCHITECTURE.md)
 
@@ -141,18 +141,18 @@
 ## Demo Video (21:00–21:45)
 
 - [x] Write a short demo script (DEMO_SCRIPT.md)
-- [ ] Record 5 minutes following this order: Vendor Details → Upload → AI Extraction → AI Comparison → Company API Verification → Missing Document → Email → Review → Approve/Reject
+- [x] Record the demo (demo/demo-video.webm, 1:35 captioned walkthrough) following this order: Vendor Details → Upload → AI Extraction → AI Comparison → Company API Verification → Missing Document → Email → Review → Approve/Reject
 
 ---
 
 ## Submit (21:45–22:00)
 
-- [ ] Working application
+- [x] Working application
 - [ ] Source code pushed to GitHub
-- [ ] Database schema (`schema.prisma`)
-- [ ] README
-- [ ] Architecture explanation
-- [ ] 5-minute demo video
+- [x] Database schema (`schema.prisma`)
+- [x] README
+- [x] Architecture explanation
+- [x] Demo video
 - [ ] Send the submission ✅
 
 ---

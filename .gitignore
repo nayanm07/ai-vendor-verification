@@ -5,3 +5,6 @@ server/uploads/*
 !server/uploads/.gitkeep
 *.log
 .DS_Store
+
+# demo recordings (large binaries, submit separately)
+demo/

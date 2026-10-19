@@ -2,9 +2,10 @@
   "name": "vendor-verification-workspace",
   "private": true,
   "scripts": {
-    "db:up": "wsl docker compose up -d",
+    "db:up": "docker compose up -d",
     "dev": "concurrently -n api,web -c blue,green \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
-    "install:all": "npm install && npm --prefix server install && npm --prefix client install"
+    "install:all": "npm install && npm --prefix server install && npm --prefix client install",
+    "db:up:wsl": "wsl docker compose up -d"
   },
   "devDependencies": {
     "concurrently": "^10.0.6"

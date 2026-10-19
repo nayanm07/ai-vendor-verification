@@ -33,7 +33,8 @@ flow from the assessment brief:
 npm run install:all
 
 # 2. Start PostgreSQL + Mailpit (SMTP test inbox)
-npm run db:up                 # uses Docker; Postgres on :5440, Mailpit UI on http://localhost:8026
+npm run db:up                 # docker compose; Postgres on :5440, Mailpit UI on http://localhost:8026
+                              # (Docker inside WSL on Windows: npm run db:up:wsl)
 
 # 3. Configure environment
 cp server/.env.example server/.env
