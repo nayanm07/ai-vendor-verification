@@ -1,4 +1,13 @@
-import type { Vendor, VendorDetails, VendorVersion, FieldChange } from '../types'
+import type {
+  Comparison,
+  DocType,
+  ExtractedData,
+  FieldChange,
+  Vendor,
+  VendorDetails,
+  VendorDocument,
+  VendorVersion,
+} from '../types'
 
 export class ApiError extends Error {
   status: number
@@ -42,4 +51,20 @@ export const api = {
   listVersions: (id: string) => request<VendorVersion[]>(`/vendors/${id}/versions`),
   restoreVersion: (id: string, versionNo: number) =>
     request<UpdateResult>(`/vendors/${id}/versions/${versionNo}/restore`, json('POST')),
+
+  listDocuments: (vendorId: string) => request<VendorDocument[]>(`/vendors/${vendorId}/documents`),
+  uploadDocument: (vendorId: string, docType: DocType, file: File) => {
+    const form = new FormData()
+    form.append('docType', docType)
+    form.append('file', file)
+    return request<VendorDocument>(`/vendors/${vendorId}/documents`, { method: 'POST', body: form })
+  },
+  reExtract: (docId: string) => request<VendorDocument>(`/documents/${docId}/extract`, json('POST')),
+  updateExtracted: (docId: string, extractedData: Partial<ExtractedData>) =>
+    request<VendorDocument>(`/documents/${docId}`, json('PUT', { extractedData })),
+  deleteDocument: (docId: string) => request<null>(`/documents/${docId}`, json('DELETE')),
+  documentFileUrl: (docId: string) => `/api/documents/${docId}/file`,
+
+  compare: (vendorId: string) => request<Comparison>(`/vendors/${vendorId}/compare`, json('POST')),
+  latestComparison: (vendorId: string) => request<Comparison | null>(`/vendors/${vendorId}/comparisons/latest`),
 }

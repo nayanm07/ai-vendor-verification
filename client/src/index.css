@@ -77,3 +77,10 @@ td.new { color: var(--ok); }
 .badge-rejected, .badge-mismatch, .badge-failed, .badge-missing, .badge-high { background: #fbe1de; color: var(--danger); }
 .badge-action_required, .badge-unable_to_verify, .badge-pending, .badge-medium { background: #fdf0d5; color: var(--warn); }
 .badge-under_review { background: #e0e9fb; color: var(--primary); }
+
+.doc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 0 16px; }
+.doc-grid .card table td { padding: 5px 8px; }
+.file-btn { display: inline-block; background: var(--primary); color: #fff; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+.file-btn input { display: none; }
+.row-mismatch td { background: #fdf3f2; }
+.small-text { font-size: 12px; }

@@ -31,6 +31,53 @@ export interface FieldChange {
   next: string
 }
 
+export type DocType = 'REGISTRATION' | 'GST' | 'BANK'
+
+export const DOC_TYPES: { key: DocType; label: string }[] = [
+  { key: 'REGISTRATION', label: 'Company Registration Certificate' },
+  { key: 'GST', label: 'GST / Tax Certificate' },
+  { key: 'BANK', label: 'Bank Document' },
+]
+
+export const EXTRACTED_FIELDS = ['companyName', 'regNumber', 'gstNumber', 'address', 'bankAccount', 'ifsc'] as const
+export type ExtractedField = (typeof EXTRACTED_FIELDS)[number]
+
+export type ExtractedData = Record<ExtractedField, string | null> & {
+  detectedDocumentType?: string
+  notes?: string
+}
+
+export interface VendorDocument {
+  id: string
+  docType: DocType
+  originalName: string
+  mimeType: string
+  extractionStatus: 'PENDING' | 'EXTRACTED' | 'FAILED'
+  extractedData: ExtractedData | null
+  extractionError: string | null
+  editedAt: string | null
+  uploadedAt: string
+}
+
+export interface ComparisonField {
+  field: ExtractedField
+  status: 'MATCH' | 'MISMATCH' | 'MISSING'
+  note: string
+  values: Record<string, string | null>
+}
+
+export interface Comparison {
+  id: string
+  hasMismatch: boolean
+  createdAt: string
+  result: {
+    fields: ComparisonField[]
+    summary: string
+    missingDocuments: DocType[]
+    sources: string[]
+  }
+}
+
 export interface VendorVersion {
   id: string
   versionNo: number

@@ -9,7 +9,7 @@ function required(name: string): string {
 // Third-party keys are optional at boot so the app still runs without them;
 // each integration reports a clear error when its key is missing.
 export const env = {
-  port: Number(process.env.PORT ?? 4000),
+  port: Number(process.env.PORT ?? 4010),
   clientOrigin: process.env.CLIENT_ORIGIN ?? "http://localhost:5173",
   databaseUrl: required("DATABASE_URL"),
   openaiApiKey: process.env.OPENAI_API_KEY ?? "",
