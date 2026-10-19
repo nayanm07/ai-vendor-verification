@@ -3,9 +3,16 @@ import type { DocType, Document, Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 import { HttpError, badRequest, notFound } from "../utils/httpError.js";
 import { getVendor } from "./vendor.service.js";
-import { compareSources, extractDocument, EXTRACTED_FIELDS, type SourceValues } from "./ai.service.js";
+import { compareSources, extractDocument, EXTRACTED_FIELDS, type ExtractedField, type FieldEvidence } from "./ai.service.js";
 
 export const DOC_TYPES: DocType[] = ["REGISTRATION", "GST", "BANK"];
+
+/** Which fields each document type is expected to contain. */
+const EXPECTED_FIELDS: Record<DocType, ExtractedField[]> = {
+  REGISTRATION: ["companyName", "regNumber", "address"],
+  GST: ["companyName", "gstNumber", "address"],
+  BANK: ["companyName", "bankAccount", "ifsc"],
+};
 
 export function listDocuments(vendorId: string) {
   return prisma.document.findMany({ where: { vendorId }, orderBy: { uploadedAt: "desc" } });
@@ -95,7 +102,7 @@ export async function compareVendor(vendorId: string) {
   const docs = await prisma.document.findMany({ where: { vendorId, extractionStatus: "EXTRACTED" } });
   if (docs.length === 0) throw badRequest("Upload and extract at least one document before comparing");
 
-  const sources: SourceValues = {
+  const sources: Record<string, Record<string, string | null>> = {
     "Vendor Form": Object.fromEntries(EXTRACTED_FIELDS.map((f) => [f, vendor[f] || null])),
   };
   for (const d of docs) {
@@ -103,7 +110,24 @@ export async function compareVendor(vendorId: string) {
     sources[`${d.docType} Document`] = Object.fromEntries(EXTRACTED_FIELDS.map((f) => [f, data?.[f] ?? null]));
   }
 
-  const ai = await compareSources(sources);
+  // Only compare a field across sources that are expected to carry it, so e.g. a bank letter
+  // without a GSTIN isn't reported as a GST mismatch.
+  const evidence = Object.fromEntries(
+    EXTRACTED_FIELDS.map((field) => {
+      const values: Record<string, string> = {};
+      const missingFrom: string[] = [];
+      for (const [src, vals] of Object.entries(sources)) {
+        const docType = src.replace(" Document", "") as DocType;
+        const expected = src === "Vendor Form" || EXPECTED_FIELDS[docType]?.includes(field);
+        if (!expected) continue;
+        if (vals[field]) values[src] = vals[field];
+        else missingFrom.push(src);
+      }
+      return [field, { values, missingFrom }];
+    }),
+  ) as FieldEvidence;
+
+  const ai = await compareSources(evidence);
 
   // Attach the raw per-source values so the UI can show them side by side.
   const fields = EXTRACTED_FIELDS.map((field) => {

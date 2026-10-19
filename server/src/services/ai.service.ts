@@ -70,11 +70,22 @@ const extractionJsonSchema = {
   additionalProperties: false,
   required: [...EXTRACTED_FIELDS, "detectedDocumentType", "notes"],
   properties: {
-    companyName: { ...nullableString, description: "Legal name of the company exactly as printed" },
-    regNumber: { ...nullableString, description: "Company registration number / CIN / incorporation number" },
+    companyName: {
+      ...nullableString,
+      description: "Legal name of the company (or bank account holder) exactly as printed, with normal spacing",
+    },
+    regNumber: {
+      ...nullableString,
+      description:
+        "Company incorporation number (CIN / company number). NEVER put a GSTIN, PAN or tax number here; null if the document has no incorporation number",
+    },
     gstNumber: { ...nullableString, description: "GSTIN, VAT or tax identification number" },
-    address: { ...nullableString, description: "Registered or principal business address" },
-    bankAccount: { ...nullableString, description: "Bank account number, digits only" },
+    address: {
+      ...nullableString,
+      description:
+        "The company's own registered or business address, with normal word spacing. NOT the address of a bank branch or the issuing authority",
+    },
+    bankAccount: { ...nullableString, description: "Bank account number" },
     ifsc: { ...nullableString, description: "IFSC / bank branch code" },
     detectedDocumentType: {
       type: "string",
@@ -111,12 +122,12 @@ export async function extractDocument(file: { filePath: string; mimeType: string
       ? { type: "file", file: { filename: file.originalName, file_data: dataUrl } }
       : { type: "image_url", image_url: { url: dataUrl, detail: "high" } };
 
-  return structuredCompletion({
+  const result = await structuredCompletion({
     system:
       "You extract structured data from vendor onboarding documents. " +
-      "Copy values exactly as they appear (preserve spelling, suffixes like 'Pvt Ltd', and punctuation). " +
-      "Never guess or infer a value that is not visibly present — use null instead. " +
-      "Strip spaces from account numbers, GSTIN and IFSC.",
+      "Copy values exactly as they appear (preserve spelling, suffixes like 'Pvt Ltd', punctuation and word spacing). " +
+      "Each value belongs to exactly one field — never copy the same identifier into two fields. " +
+      "Never guess or infer a value that is not visibly present — use null instead.",
     content: [
       { type: "text", text: `The user uploaded this as: ${DOC_LABELS[docType] ?? docType}. Extract the fields.` },
       filePart,
@@ -125,6 +136,31 @@ export async function extractDocument(file: { filePath: string; mimeType: string
     jsonSchema: extractionJsonSchema,
     schema: extractionSchema,
   });
+  return normalizeExtraction(result, docType);
+}
+
+const PLACEHOLDERS = new Set(["", "null", "none", "n/a", "na", "-", "not available", "not found"]);
+const clean = (v: string | null) => {
+  const t = v?.replace(/\s+/g, " ").trim() ?? "";
+  return PLACEHOLDERS.has(t.toLowerCase()) ? null : t;
+};
+const compact = (v: string | null) => clean(v)?.replace(/[\s-]/g, "").toUpperCase() ?? null;
+
+/** Deterministic cleanup the model shouldn't be trusted with: placeholders, identifier formatting, duplicate IDs. */
+function normalizeExtraction(r: ExtractionResult, docType: string): ExtractionResult {
+  const out = {
+    ...r,
+    companyName: clean(r.companyName),
+    address: clean(r.address),
+    regNumber: compact(r.regNumber),
+    gstNumber: compact(r.gstNumber),
+    bankAccount: compact(r.bankAccount),
+    ifsc: compact(r.ifsc),
+  };
+  if (out.regNumber && out.regNumber === out.gstNumber) out.regNumber = null;
+  // Addresses on bank letters/cheques are the branch's, not the vendor's — comparing them causes false mismatches.
+  if (docType === "BANK") out.address = null;
+  return out;
 }
 
 // ---------------------------------------------------------------- comparison
@@ -162,19 +198,22 @@ const comparisonSchema = z.object({
   summary: z.string(),
 });
 
-export type SourceValues = Record<string, Partial<Record<ExtractedField, string | null>>>;
+/** Per field: the values found in sources expected to carry it, and expected sources where it was absent. */
+export type FieldEvidence = Record<ExtractedField, { values: Record<string, string>; missingFrom: string[] }>;
 
-export function compareSources(sources: SourceValues) {
+export function compareSources(evidence: FieldEvidence) {
   return structuredCompletion({
     system:
-      "You are a KYC analyst comparing vendor information across sources. For each field decide:\n" +
-      "- MATCH: every source that has a value agrees. Ignore case, extra whitespace and punctuation only. " +
+      "You are a KYC analyst comparing vendor information across sources. " +
+      "For each field you get `values` (source → value, only from sources expected to contain that field) " +
+      "and `missingFrom` (uploaded sources that should have contained it but did not). Decide:\n" +
+      "- MISMATCH: any two values disagree in substance — including singular/plural or spelling differences " +
+      "in a company name (e.g. 'ABC Technologies' vs 'ABC Technology' is a MISMATCH), or any character difference in an identifier.\n" +
+      "- MISSING: `values` is empty, or `missingFrom` is non-empty and the values otherwise agree.\n" +
+      "- MATCH: all values agree and `missingFrom` is empty. Ignore case, whitespace and punctuation. " +
       "Treat standard abbreviations as equal (Pvt = Private, Ltd = Limited, & = and).\n" +
-      "- MISMATCH: any two sources disagree in substance — including singular/plural or spelling differences " +
-      "in a company name (e.g. 'ABC Technologies' vs 'ABC Technology' is a MISMATCH), or any digit difference in a number.\n" +
-      "- MISSING: no source has a value, or the field is absent from the document that should contain it.\n" +
-      "Return exactly one entry per field.",
-    content: [{ type: "text", text: `Sources (null = not present):\n${JSON.stringify(sources, null, 2)}` }],
+      "MISMATCH takes priority over MISSING. Return exactly one entry per field.",
+    content: [{ type: "text", text: JSON.stringify(evidence, null, 2) }],
     schemaName: "vendor_cross_document_comparison",
     jsonSchema: comparisonJsonSchema,
     schema: comparisonSchema,
