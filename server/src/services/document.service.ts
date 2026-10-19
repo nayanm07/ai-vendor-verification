@@ -8,7 +8,7 @@ import { compareSources, extractDocument, EXTRACTED_FIELDS, type ExtractedField,
 export const DOC_TYPES: DocType[] = ["REGISTRATION", "GST", "BANK"];
 
 /** Which fields each document type is expected to contain. */
-const EXPECTED_FIELDS: Record<DocType, ExtractedField[]> = {
+export const EXPECTED_FIELDS: Record<DocType, ExtractedField[]> = {
   REGISTRATION: ["companyName", "regNumber", "address"],
   GST: ["companyName", "gstNumber", "address"],
   BANK: ["companyName", "bankAccount", "ifsc"],

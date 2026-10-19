@@ -4,6 +4,8 @@ import { env } from "./config/env.js";
 import { vendorRouter } from "./routes/vendor.routes.js";
 import { documentRouter, vendorDocumentRouter } from "./routes/document.routes.js";
 import { verificationRouter } from "./routes/verification.routes.js";
+import { taskRouter, vendorWorkflowRouter } from "./routes/workflow.routes.js";
+import { emailProvider } from "./integrations/email.js";
 import { registryClient } from "./integrations/opencorporates/index.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 
@@ -18,7 +20,7 @@ app.get("/api/health", (_req, res) => {
     integrations: {
       openai: Boolean(env.openaiApiKey),
       opencorporates: registryClient.mode,
-      resend: Boolean(env.resendApiKey),
+      email: emailProvider.name,
     },
   });
 });
@@ -26,6 +28,8 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/vendors", vendorRouter);
 app.use("/api/vendors/:id", vendorDocumentRouter);
 app.use("/api/vendors/:id", verificationRouter);
+app.use("/api/vendors/:id", vendorWorkflowRouter);
+app.use("/api/tasks", taskRouter);
 app.use("/api/documents", documentRouter);
 
 app.use(notFoundHandler);

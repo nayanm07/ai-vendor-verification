@@ -71,6 +71,7 @@ model Vendor {
   verifications Verification[]
   tasks         Task[]
   emailLogs     EmailLog[]
+  activities    Activity[]
 }
 
 /// Full snapshot of vendor details at each save, plus a field-level diff vs. the previous version.
@@ -169,4 +170,20 @@ model EmailLog {
   vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
   @@index([vendorId, missingDoc])
+}
+
+/// Audit trail of workflow events (status changes, automation results, emails, tasks).
+model Activity {
+  id        String   @id @default(uuid())
+  vendorId  String
+  /// STATUS_CHANGE | EMAIL | TASK | CHECK
+  type      String
+  message   String
+  /// "system" for automation, "reviewer" for manual actions
+  actor     String   @default("system")
+  createdAt DateTime @default(now())
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId, createdAt])
 }

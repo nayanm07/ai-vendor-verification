@@ -4,7 +4,7 @@ import { DocumentCard } from './DocumentCard'
 import { ComparisonPanel } from './ComparisonPanel'
 import { DOC_TYPES, type VendorDocument } from '../types'
 
-export function DocumentsTab({ vendorId }: { vendorId: string }) {
+export function DocumentsTab({ vendorId, onChange }: { vendorId: string; onChange?: () => void }) {
   const [docs, setDocs] = useState<VendorDocument[]>([])
   const [error, setError] = useState('')
   const [changes, setChanges] = useState(0)
@@ -29,11 +29,12 @@ export function DocumentsTab({ vendorId }: { vendorId: string }) {
             onChange={() => {
               load()
               setChanges((c) => c + 1)
+              onChange?.()
             }}
           />
         ))}
       </div>
-      <ComparisonPanel vendorId={vendorId} refreshKey={changes} />
+      <ComparisonPanel vendorId={vendorId} refreshKey={changes} onCompared={onChange} />
     </div>
   )
 }

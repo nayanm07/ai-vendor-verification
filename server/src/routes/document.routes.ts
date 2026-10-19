@@ -4,6 +4,7 @@ import { z } from "zod";
 import * as documentService from "../services/document.service.js";
 import { upload } from "../middleware/upload.js";
 import { badRequest } from "../utils/httpError.js";
+import { evaluateVendor } from "../services/workflow.service.js";
 
 const uploadBodySchema = z.object({ docType: z.enum(["REGISTRATION", "GST", "BANK"]) });
 
@@ -19,18 +20,23 @@ vendorDocumentRouter.get("/documents", async (req, res) => {
 
 vendorDocumentRouter.post("/documents", upload.single("file"), async (req, res) => {
   if (!req.file) throw badRequest("No file uploaded (field name: file)");
+  let doc;
   try {
     const { docType } = uploadBodySchema.parse(req.body);
-    res.status(201).json(await documentService.uploadDocument(vendorIdOf(req), docType, req.file));
+    doc = await documentService.uploadDocument(vendorIdOf(req), docType, req.file);
   } catch (err) {
     // Multer has already written the file; don't leave orphans behind on rejected uploads.
     await fs.rm(req.file.path, { force: true });
     throw err;
   }
+  await evaluateVendor(doc.vendorId);
+  res.status(201).json(doc);
 });
 
 vendorDocumentRouter.post("/compare", async (req, res) => {
-  res.status(201).json(await documentService.compareVendor(vendorIdOf(req)));
+  const comparison = await documentService.compareVendor(vendorIdOf(req));
+  await evaluateVendor(comparison.vendorId);
+  res.status(201).json(comparison);
 });
 
 vendorDocumentRouter.get("/comparisons/latest", async (req, res) => {
@@ -46,7 +52,9 @@ documentRouter.get("/:id/file", async (req, res) => {
 });
 
 documentRouter.post("/:id/extract", async (req, res) => {
-  res.json(await documentService.reExtract(req.params.id));
+  const doc = await documentService.reExtract(req.params.id);
+  await evaluateVendor(doc.vendorId);
+  res.json(doc);
 });
 
 documentRouter.put("/:id", async (req, res) => {
@@ -55,6 +63,8 @@ documentRouter.put("/:id", async (req, res) => {
 });
 
 documentRouter.delete("/:id", async (req, res) => {
-  await documentService.deleteDocument(req.params.id);
+  const doc = await documentService.getDocument(req.params.id);
+  await documentService.deleteDocument(doc.id);
+  await evaluateVendor(doc.vendorId);
   res.status(204).end();
 });

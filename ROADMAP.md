@@ -93,28 +93,28 @@
 
 ## Phase 4: Document Checklist + Email (17:45–18:45)
 
-- [ ] Prisma model: `EmailLog`
-- [ ] Checklist logic: Registration / GST / Bank, each **Available / Missing / Verified**
-- [ ] `GET /api/vendors/:id/checklist`
-- [ ] Resend email service (company name, missing doc, request to provide it)
-- [ ] Send automatically when a required doc is missing
-- [ ] Log each email so the same one isn't sent twice
-- [ ] `POST /api/vendors/:id/notify-missing` (manual resend)
-- [ ] Frontend: checklist table plus email log
+- [x] Prisma model: `EmailLog`
+- [x] Checklist logic: Registration / GST / Bank, each **Available / Missing / Verified**
+- [x] `GET /api/vendors/:id/checklist`
+- [x] Email service: Resend when `RESEND_API_KEY` is set, otherwise SMTP to Mailpit (docker-compose, inbox http://localhost:8026)
+- [x] Send automatically when a required doc is missing
+- [x] Log each email so the same one isn't sent twice
+- [x] `POST /api/vendors/:id/notify-missing` (manual resend)
+- [x] Frontend: checklist table plus email log
 
 ---
 
 ## Phase 5: Workflow + Tasks (18:45–19:45)
 
-- [ ] Prisma model: `Task`
-- [ ] Status flow: Draft → Under Review → Action Required → Approved / Rejected
-- [ ] Validate allowed status transitions
-- [ ] Automatically set **Action Required** on a missing doc or a mismatch
-- [ ] Automatically create a Task (title, priority, due date, Pending)
-- [ ] `PATCH /api/vendors/:id/status`: reviewer update
-- [ ] `GET /api/tasks` and `PATCH /api/tasks/:id` (Pending / Completed)
-- [ ] Frontend: status badge plus reviewer dropdown
-- [ ] Frontend: task list with a complete button
+- [x] Prisma model: `Task`
+- [x] Status flow: Draft → Under Review → Action Required → Approved / Rejected
+- [x] Validate allowed status transitions
+- [x] Automatically set **Action Required** on a missing doc or a mismatch
+- [x] Automatically create a Task (title, priority, due date, Pending)
+- [x] `PATCH /api/vendors/:id/status`: reviewer update
+- [x] `GET /api/tasks` and `PATCH /api/tasks/:id` (Pending / Completed)
+- [x] Frontend: status badge plus reviewer dropdown
+- [x] Frontend: task list with a complete button
 
 ---
 

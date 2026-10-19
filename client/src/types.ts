@@ -103,6 +103,60 @@ export interface Verification {
   } | null
 }
 
+export interface ChecklistItem {
+  docType: DocType
+  label: string
+  status: 'MISSING' | 'AVAILABLE' | 'VERIFIED'
+  reason: string
+  documentId: string | null
+  lastReminderAt: string | null
+}
+
+export interface EmailLog {
+  id: string
+  toEmail: string
+  subject: string
+  missingDoc: DocType
+  status: 'SENT' | 'FAILED'
+  providerId: string | null
+  error: string | null
+  sentAt: string
+}
+
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH'
+export type TaskStatus = 'PENDING' | 'COMPLETED'
+
+export interface Task {
+  id: string
+  vendorId: string
+  title: string
+  description: string | null
+  priority: TaskPriority
+  dueDate: string
+  status: TaskStatus
+  sourceKey: string | null
+  createdAt: string
+  completedAt: string | null
+  vendor?: { id: string; companyName: string }
+}
+
+export interface Activity {
+  id: string
+  type: string
+  message: string
+  actor: string
+  createdAt: string
+}
+
+export interface Evaluation {
+  status: VendorStatus
+  issues: { key: string; title: string; priority: TaskPriority }[]
+  emailsSent: DocType[]
+  emailError: string | null
+  tasksCreated: number
+  tasksResolved: number
+}
+
 export interface VendorVersion {
   id: string
   versionNo: number

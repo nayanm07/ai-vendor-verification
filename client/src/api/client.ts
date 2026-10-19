@@ -1,4 +1,12 @@
 import type {
+  Activity,
+  ChecklistItem,
+  EmailLog,
+  Evaluation,
+  Task,
+  TaskPriority,
+  TaskStatus,
+  VendorStatus,
   Comparison,
   DocType,
   ExtractedData,
@@ -71,4 +79,25 @@ export const api = {
 
   verify: (vendorId: string) => request<Verification>(`/vendors/${vendorId}/verify`, json('POST')),
   latestVerification: (vendorId: string) => request<Verification | null>(`/vendors/${vendorId}/verifications/latest`),
+
+  checklist: (vendorId: string) => request<ChecklistItem[]>(`/vendors/${vendorId}/checklist`),
+  emails: (vendorId: string) => request<EmailLog[]>(`/vendors/${vendorId}/emails`),
+  notifyMissing: (vendorId: string) =>
+    request<{ sent: DocType[]; skipped: DocType[] }>(`/vendors/${vendorId}/notify-missing`, json('POST')),
+  workflow: (vendorId: string) =>
+    request<{ status: VendorStatus; allowedTransitions: VendorStatus[] }>(`/vendors/${vendorId}/workflow`),
+  changeStatus: (vendorId: string, status: VendorStatus) =>
+    request<{ vendor: Vendor; evaluation: Evaluation | null }>(`/vendors/${vendorId}/status`, json('PATCH', { status })),
+  runChecks: (vendorId: string) =>
+    request<{ steps: { step: string; ok: boolean; message: string }[]; evaluation: Evaluation | null; vendor: Vendor }>(
+      `/vendors/${vendorId}/run-checks`,
+      json('POST'),
+    ),
+  activity: (vendorId: string) => request<Activity[]>(`/vendors/${vendorId}/activity`),
+
+  vendorTasks: (vendorId: string) => request<Task[]>(`/vendors/${vendorId}/tasks`),
+  createTask: (vendorId: string, data: { title: string; priority: TaskPriority; dueDate: string; description?: string }) =>
+    request<Task>(`/vendors/${vendorId}/tasks`, json('POST', data)),
+  allTasks: (status?: TaskStatus) => request<Task[]>(`/tasks${status ? `?status=${status}` : ''}`),
+  updateTask: (taskId: string, status: TaskStatus) => request<Task>(`/tasks/${taskId}`, json('PATCH', { status })),
 }

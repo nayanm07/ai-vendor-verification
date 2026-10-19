@@ -3,7 +3,15 @@ import { api } from '../api/client'
 import { StatusBadge } from './StatusBadge'
 import { DOC_TYPES, FIELD_LABELS, type Comparison } from '../types'
 
-export function ComparisonPanel({ vendorId, refreshKey }: { vendorId: string; refreshKey: number }) {
+export function ComparisonPanel({
+  vendorId,
+  refreshKey,
+  onCompared,
+}: {
+  vendorId: string
+  refreshKey: number
+  onCompared?: () => void
+}) {
   const [comparison, setComparison] = useState<Comparison | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -17,6 +25,7 @@ export function ComparisonPanel({ vendorId, refreshKey }: { vendorId: string; re
     setError('')
     try {
       setComparison(await api.compare(vendorId))
+      onCompared?.()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Comparison failed')
     } finally {
