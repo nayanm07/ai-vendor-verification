@@ -3,6 +3,7 @@ import type { DocType, Document, Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 import { HttpError, badRequest, notFound } from "../utils/httpError.js";
 import { getVendor, updateVendor } from "./vendor.service.js";
+import { VENDOR_FIELDS, vendorInputSchema } from "../validation/vendor.schema.js";
 import { compareSources, extractDocument, EXTRACTED_FIELDS, type ExtractedField, type FieldEvidence } from "./ai.service.js";
 
 export const DOC_TYPES: DocType[] = ["REGISTRATION", "GST", "BANK"];
@@ -168,7 +169,8 @@ const FILL_SOURCES: Record<ExtractedField, DocType[]> = {
 /**
  * Fills EMPTY vendor fields from the extracted documents (never overwrites values the user typed),
  * then saves through the normal update path so a version is recorded.
- * Returns the fields that were filled.
+ * Extracted values go through the same validation as the vendor form; values that fail
+ * (e.g. a misread IFSC) are skipped and reported rather than saved.
  */
 export async function fillVendorFromDocuments(vendorId: string) {
   const vendor = await getVendor(vendorId);
@@ -176,26 +178,26 @@ export async function fillVendorFromDocuments(vendorId: string) {
   if (docs.length === 0) throw badRequest("Upload and extract at least one document first");
 
   const byType = new Map(docs.map((d) => [d.docType, (d.extractedData ?? {}) as Record<string, string | null>]));
-  const current = Object.fromEntries(
-    (["companyName", "contactPerson", "email", "phone", "address", "regNumber", "gstNumber", "bankAccount", "ifsc"] as const).map(
-      (f) => [f, vendor[f]],
-    ),
-  ) as Record<string, string>;
+  const current = Object.fromEntries(VENDOR_FIELDS.map((f) => [f, vendor[f]])) as Record<string, string>;
 
   const filled: string[] = [];
+  const skipped: { field: string; value: string; reason: string }[] = [];
   for (const field of EXTRACTED_FIELDS) {
     if (current[field]?.trim()) continue; // keep what the user already entered
     for (const docType of FILL_SOURCES[field]) {
       const value = byType.get(docType)?.[field];
-      if (value) {
-        current[field] = value;
+      if (!value) continue;
+      const check = vendorInputSchema.shape[field].safeParse(value);
+      if (check.success) {
+        current[field] = check.data; // normalised the same way as form input (trim, uppercase IDs)
         filled.push(field);
         break;
       }
+      skipped.push({ field, value, reason: check.error.issues[0]?.message ?? "Invalid value" });
     }
   }
 
-  if (filled.length === 0) return { vendor, filled };
-  const { vendor: updated } = await updateVendor(vendorId, current as never);
-  return { vendor: updated, filled };
+  if (filled.length === 0) return { vendor, filled, skipped };
+  const { vendor: updated } = await updateVendor(vendorId, vendorInputSchema.parse(current));
+  return { vendor: updated, filled, skipped };
 }

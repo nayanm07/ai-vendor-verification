@@ -141,13 +141,36 @@ async function collectIssues(vendorId: string) {
 }
 
 /**
+ * Serialises evaluations per vendor. Evaluation is check-then-act (find open tasks, then create;
+ * find recent emails, then send), so two triggers landing together — e.g. an upload and a
+ * comparison — could otherwise both create the same task or send the same email.
+ * In-process only: running several API instances would need a DB-level lock (pg_advisory_xact_lock).
+ */
+const evaluationQueues = new Map<string, Promise<unknown>>();
+
+function withVendorLock<T>(vendorId: string, fn: () => Promise<T>): Promise<T> {
+  const previous = evaluationQueues.get(vendorId) ?? Promise.resolve();
+  const run = previous.catch(() => {}).then(fn);
+  const tail = run.catch(() => {});
+  evaluationQueues.set(vendorId, tail);
+  void tail.then(() => {
+    if (evaluationQueues.get(vendorId) === tail) evaluationQueues.delete(vendorId);
+  });
+  return run;
+}
+
+/**
  * Re-evaluates a vendor under review:
  *  - emails the vendor about missing documents (deduplicated),
  *  - opens a task per new issue and auto-completes tasks whose issue has been resolved,
  *  - moves Under Review ⇄ Action Required accordingly.
  * No-op for Draft / Approved / Rejected vendors.
  */
-export async function evaluateVendor(vendorId: string) {
+export function evaluateVendor(vendorId: string) {
+  return withVendorLock(vendorId, () => evaluateVendorNow(vendorId));
+}
+
+async function evaluateVendorNow(vendorId: string) {
   const vendor = await getVendor(vendorId);
   if (!MONITORED.includes(vendor.status)) return null;
 

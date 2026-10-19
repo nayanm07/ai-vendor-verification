@@ -124,3 +124,20 @@ ROADMAP.md         build plan
 ```
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for the design, data model, and request flow.
+
+## Production readiness
+
+This was built as a time-boxed assessment. The structure is meant to carry into production
+(layered services, swappable integrations, validated inputs and AI output, migrations, an audit
+trail), but these are the deliberate gaps I would close before handling real vendor data:
+
+| Area | Current state | Production next step |
+|---|---|---|
+| Authentication | None; the API assumes one trusted reviewer | Login + role-based access (reviewer / admin) on every route |
+| Sensitive data | Bank details stored in plain text and sent to OpenAI | Field-level encryption at rest; mask in UI and logs; data-processing agreement for AI calls |
+| Tests | Verified manually and with a scripted browser run | Unit tests for services, API integration tests, an end-to-end suite in CI |
+| File uploads | Local disk; type checked from the browser-reported MIME type | Object storage (e.g. S3) with signed URLs; check file contents, not just the declared type; virus scan |
+| AI calls | Run inside the HTTP request | Background job queue with retries, so slow model responses don't hold requests |
+| Concurrency | Evaluations serialised per vendor in-process | DB-level lock (`pg_advisory_xact_lock`) once the API runs as multiple instances |
+| Abuse / cost | No rate limiting or security headers | Rate limiting (especially on AI endpoints), Helmet, request size and per-user quotas |
+| Operations | Dev servers only | Dockerfile for the app, CI/CD, structured logging, error monitoring, health/readiness probes |
