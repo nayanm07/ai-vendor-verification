@@ -140,7 +140,7 @@
 
 ## Demo Video (21:00–21:45)
 
-- [ ] Write a short demo script
+- [x] Write a short demo script (DEMO_SCRIPT.md)
 - [ ] Record 5 minutes following this order: Vendor Details → Upload → AI Extraction → AI Comparison → Company API Verification → Missing Document → Email → Review → Approve/Reject
 
 ---
