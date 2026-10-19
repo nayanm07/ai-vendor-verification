@@ -7,6 +7,7 @@ import type {
   VendorDetails,
   VendorDocument,
   VendorVersion,
+  Verification,
 } from '../types'
 
 export class ApiError extends Error {
@@ -67,4 +68,7 @@ export const api = {
 
   compare: (vendorId: string) => request<Comparison>(`/vendors/${vendorId}/compare`, json('POST')),
   latestComparison: (vendorId: string) => request<Comparison | null>(`/vendors/${vendorId}/comparisons/latest`),
+
+  verify: (vendorId: string) => request<Verification>(`/vendors/${vendorId}/verify`, json('POST')),
+  latestVerification: (vendorId: string) => request<Verification | null>(`/vendors/${vendorId}/verifications/latest`),
 }

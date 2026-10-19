@@ -5,9 +5,10 @@ import { StatusBadge } from '../components/StatusBadge'
 import { VendorForm } from '../components/VendorForm'
 import { VersionHistory } from '../components/VersionHistory'
 import { DocumentsTab } from '../components/DocumentsTab'
+import { VerificationPanel } from '../components/VerificationPanel'
 import { VENDOR_FIELDS, type Vendor, type VendorDetails } from '../types'
 
-const TABS = ['Details', 'Documents', 'History'] as const
+const TABS = ['Details', 'Documents', 'Verification', 'History'] as const
 type Tab = (typeof TABS)[number]
 
 const pickDetails = (v: Vendor) => Object.fromEntries(VENDOR_FIELDS.map((f) => [f.key, v[f.key]])) as VendorDetails
@@ -64,6 +65,8 @@ export function VendorDetail() {
       )}
 
       {tab === 'Documents' && <DocumentsTab vendorId={vendor.id} />}
+
+      {tab === 'Verification' && <VerificationPanel vendorId={vendor.id} />}
 
       {tab === 'History' && (
         <VersionHistory

@@ -79,13 +79,15 @@
 
 ## Phase 3: OpenCorporates Verification (16:30–17:45)
 
-- [ ] Prisma model: `Verification`
-- [ ] OpenCorporates service: search by registration number, falling back to company name
-- [ ] Fetch company details (name, number, address, status)
-- [ ] Compare with vendor data, giving **Verified / Mismatch / Unable to Verify**
-- [ ] Handle errors: missing or invalid token (401), not found (404), rate limit (429), timeout
-- [ ] `POST /api/vendors/:id/verify`
-- [ ] Frontend: verification result card with a status badge
+> Mock mode: with no `OPENCORPORATES_API_TOKEN`, an offline mock returning the real v0.4 response shape is used (fixtures: ABC Technologies = Verified, XYZ Global Solutions = Mismatch, Globex = struck off; `SIMULATE_TIMEOUT` / `SIMULATE_RATE_LIMIT` / `SIMULATE_AUTH_ERROR` as reg number simulate API errors). Setting the token switches to the live API automatically.
+
+- [x] Prisma model: `Verification`
+- [x] OpenCorporates service: search by registration number, falling back to company name
+- [x] Fetch company details (name, number, address, status)
+- [x] Compare with vendor data, giving **Verified / Mismatch / Unable to Verify**
+- [x] Handle errors: missing or invalid token (401), not found (404), rate limit (429), timeout
+- [x] `POST /api/vendors/:id/verify`
+- [x] Frontend: verification result card with a status badge
 
 ---
 

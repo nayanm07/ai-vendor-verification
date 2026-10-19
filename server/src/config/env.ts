@@ -15,6 +15,9 @@ export const env = {
   openaiApiKey: process.env.OPENAI_API_KEY ?? "",
   openaiModel: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
   openCorporatesToken: process.env.OPENCORPORATES_API_TOKEN ?? "",
+  /** auto = live if a token is set, otherwise mock */
+  openCorporatesMode: (process.env.OPENCORPORATES_MODE ?? "auto") as "auto" | "live" | "mock",
+  openCorporatesJurisdiction: process.env.OPENCORPORATES_JURISDICTION ?? "in",
   resendApiKey: process.env.RESEND_API_KEY ?? "",
   emailFrom: process.env.EMAIL_FROM ?? "Vendor Verification <onboarding@resend.dev>",
 };

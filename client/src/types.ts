@@ -78,6 +78,31 @@ export interface Comparison {
   }
 }
 
+export interface Verification {
+  id: string
+  source: string
+  searchedBy: 'regNumber' | 'companyName'
+  query: string
+  result: 'VERIFIED' | 'MISMATCH' | 'UNABLE_TO_VERIFY'
+  error: string | null
+  createdAt: string
+  details: {
+    company: {
+      name: string
+      companyNumber: string
+      jurisdiction: string
+      status: string | null
+      incorporationDate: string | null
+      companyType: string | null
+      address: string | null
+      url: string
+    }
+    checks: { field: string; vendorValue: string | null; registryValue: string | null; match: boolean | null }[]
+    isActive: boolean
+    mismatches: string[]
+  } | null
+}
+
 export interface VendorVersion {
   id: string
   versionNo: number

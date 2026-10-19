@@ -84,3 +84,4 @@ td.new { color: var(--ok); }
 .file-btn input { display: none; }
 .row-mismatch td { background: #fdf3f2; }
 .small-text { font-size: 12px; }
+code { background: #f0f2f5; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
