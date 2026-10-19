@@ -10,8 +10,14 @@ import { VerificationPanel } from '../components/VerificationPanel'
 import { ReviewTab } from '../components/ReviewTab'
 import { VENDOR_FIELDS, type Vendor, type VendorDetails } from '../types'
 
-const TABS = ['Details', 'Documents', 'Verification', 'Review', 'History'] as const
-type Tab = (typeof TABS)[number]
+const TABS = [
+  { key: 'Details', icon: 'badge' },
+  { key: 'Documents', icon: 'description' },
+  { key: 'Verification', icon: 'fact_check' },
+  { key: 'Review', icon: 'rate_review' },
+  { key: 'History', icon: 'schedule' },
+] as const
+type Tab = (typeof TABS)[number]['key']
 
 const pickDetails = (v: Vendor) => Object.fromEntries(VENDOR_FIELDS.map((f) => [f.key, v[f.key]])) as VendorDetails
 
@@ -21,10 +27,17 @@ export function VendorDetail() {
   const [error, setError] = useState('')
   const [tab, setTab] = useState<Tab>('Details')
   const [notice, setNotice] = useState('')
+  const [docCount, setDocCount] = useState<number | null>(null)
+  const [needsVerify, setNeedsVerify] = useState(false)
 
   const reload = useCallback(() => {
     if (!id) return
     api.getVendor(id).then(setVendor).catch((e) => setError(e.message))
+    api.listDocuments(id).then((d) => setDocCount(d.length)).catch(() => {})
+    api
+      .latestVerification(id)
+      .then((v) => setNeedsVerify(!v || v.result !== 'VERIFIED'))
+      .catch(() => {})
   }, [id])
 
   useEffect(reload, [reload])
@@ -45,27 +58,33 @@ export function VendorDetail() {
 
       <nav className="tabs">
         {TABS.map((t) => (
-          <button key={t} className={t === tab ? 'active' : ''} onClick={() => setTab(t)}>
-            {t}
+          <button key={t.key} className={t.key === tab ? 'active' : ''} onClick={() => setTab(t.key)}>
+            <Icon name={t.icon} size={18} />
+            {t.key}
+            {t.key === 'Documents' && docCount !== null && <span className="tab-count">{docCount}</span>}
+            {t.key === 'Verification' && needsVerify && <span className="tab-dot" title="Verification pending" />}
           </button>
         ))}
       </nav>
 
-      {notice && <p className="notice">{notice}</p>}
+      {notice && (
+        <p className="notice banner-row">
+          <Icon name="check_circle" size={18} /> {notice}
+        </p>
+      )}
 
       {tab === 'Details' && (
-        <div className="card">
-          <VendorForm
-            key={vendor.currentVersion}
-            initial={pickDetails(vendor)}
-            submitLabel="Save Changes"
-            onSubmit={async (data) => {
-              const { vendor: updated, changes } = await api.updateVendor(vendor.id, data)
-              setVendor(updated)
-              setNotice(changes.length ? `Saved as version ${updated.currentVersion}` : 'No changes to save')
-            }}
-          />
-        </div>
+        <VendorForm
+          key={vendor.currentVersion}
+          initial={pickDetails(vendor)}
+          submitLabel="Save Changes"
+          withHeader
+          onSubmit={async (data) => {
+            const { vendor: updated, changes } = await api.updateVendor(vendor.id, data)
+            setVendor(updated)
+            setNotice(changes.length ? `Saved as version ${updated.currentVersion}` : 'No changes to save')
+          }}
+        />
       )}
 
       {tab === 'Documents' && <DocumentsTab vendorId={vendor.id} onChange={reload} />}

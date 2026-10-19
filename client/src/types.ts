@@ -1,15 +1,15 @@
 export type VendorStatus = 'DRAFT' | 'UNDER_REVIEW' | 'ACTION_REQUIRED' | 'APPROVED' | 'REJECTED'
 
 export const VENDOR_FIELDS = [
-  { key: 'companyName', label: 'Company Name', required: true },
-  { key: 'contactPerson', label: 'Contact Person', required: true },
-  { key: 'email', label: 'Email', required: true, type: 'email' },
-  { key: 'phone', label: 'Phone' },
+  { key: 'companyName', label: 'Company Name', required: true, icon: 'domain' },
+  { key: 'contactPerson', label: 'Contact Person', required: true, icon: 'person' },
+  { key: 'email', label: 'Email', required: true, type: 'email', icon: 'mail' },
+  { key: 'phone', label: 'Phone', icon: 'call' },
   { key: 'address', label: 'Address', multiline: true },
-  { key: 'regNumber', label: 'Company Registration Number' },
-  { key: 'gstNumber', label: 'GST / Tax Number' },
-  { key: 'bankAccount', label: 'Bank Account Number' },
-  { key: 'ifsc', label: 'IFSC Code' },
+  { key: 'regNumber', label: 'Company Registration Number', icon: 'tag', mono: true },
+  { key: 'gstNumber', label: 'GST / Tax Number', icon: 'receipt_long', mono: true },
+  { key: 'bankAccount', label: 'Bank Account Number', icon: 'account_balance', mono: true },
+  { key: 'ifsc', label: 'IFSC Code', icon: 'qr_code_2', mono: true },
 ] as const
 
 export type VendorFieldKey = (typeof VENDOR_FIELDS)[number]['key']
