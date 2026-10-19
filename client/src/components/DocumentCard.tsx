@@ -88,6 +88,18 @@ export function DocumentCard({ vendorId, docType, label, doc, onChange }: Props)
               <button type="button" className="secondary small" disabled={!!busy}>
                 Browse files
               </button>
+              <input
+                ref={fileInput}
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg,.webp"
+                style={{ display: 'none' }}
+                disabled={!!busy}
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  e.target.value = ''
+                  if (file) upload(file)
+                }}
+              />
             </div>
             <div className="expected">
               <span className="muted small-text">Required fields extracted from this document:</span>
