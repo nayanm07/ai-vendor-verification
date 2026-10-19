@@ -74,6 +74,8 @@ export const api = {
   deleteDocument: (docId: string) => request<null>(`/documents/${docId}`, json('DELETE')),
   documentFileUrl: (docId: string) => `/api/documents/${docId}/file`,
 
+  fillFromDocuments: (vendorId: string) =>
+    request<{ vendor: Vendor; filled: string[] }>(`/vendors/${vendorId}/fill-from-documents`, json('POST')),
   compare: (vendorId: string) => request<Comparison>(`/vendors/${vendorId}/compare`, json('POST')),
   latestComparison: (vendorId: string) => request<Comparison | null>(`/vendors/${vendorId}/comparisons/latest`),
 

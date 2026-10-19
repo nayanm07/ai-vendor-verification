@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import type { DocType, Document, Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma.js";
 import { HttpError, badRequest, notFound } from "../utils/httpError.js";
-import { getVendor } from "./vendor.service.js";
+import { getVendor, updateVendor } from "./vendor.service.js";
 import { compareSources, extractDocument, EXTRACTED_FIELDS, type ExtractedField, type FieldEvidence } from "./ai.service.js";
 
 export const DOC_TYPES: DocType[] = ["REGISTRATION", "GST", "BANK"];
@@ -153,4 +153,49 @@ export async function compareVendor(vendorId: string) {
 
 export function latestComparison(vendorId: string) {
   return prisma.comparison.findFirst({ where: { vendorId }, orderBy: { createdAt: "desc" } });
+}
+
+/** Priority order of document types to source each field from, when filling the vendor form. */
+const FILL_SOURCES: Record<ExtractedField, DocType[]> = {
+  companyName: ["REGISTRATION", "GST", "BANK"],
+  regNumber: ["REGISTRATION"],
+  gstNumber: ["GST"],
+  address: ["REGISTRATION", "GST"],
+  bankAccount: ["BANK"],
+  ifsc: ["BANK"],
+};
+
+/**
+ * Fills EMPTY vendor fields from the extracted documents (never overwrites values the user typed),
+ * then saves through the normal update path so a version is recorded.
+ * Returns the fields that were filled.
+ */
+export async function fillVendorFromDocuments(vendorId: string) {
+  const vendor = await getVendor(vendorId);
+  const docs = await prisma.document.findMany({ where: { vendorId, extractionStatus: "EXTRACTED" } });
+  if (docs.length === 0) throw badRequest("Upload and extract at least one document first");
+
+  const byType = new Map(docs.map((d) => [d.docType, (d.extractedData ?? {}) as Record<string, string | null>]));
+  const current = Object.fromEntries(
+    (["companyName", "contactPerson", "email", "phone", "address", "regNumber", "gstNumber", "bankAccount", "ifsc"] as const).map(
+      (f) => [f, vendor[f]],
+    ),
+  ) as Record<string, string>;
+
+  const filled: string[] = [];
+  for (const field of EXTRACTED_FIELDS) {
+    if (current[field]?.trim()) continue; // keep what the user already entered
+    for (const docType of FILL_SOURCES[field]) {
+      const value = byType.get(docType)?.[field];
+      if (value) {
+        current[field] = value;
+        filled.push(field);
+        break;
+      }
+    }
+  }
+
+  if (filled.length === 0) return { vendor, filled };
+  const { vendor: updated } = await updateVendor(vendorId, current as never);
+  return { vendor: updated, filled };
 }

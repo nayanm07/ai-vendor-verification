@@ -33,6 +33,10 @@ vendorDocumentRouter.post("/documents", upload.single("file"), async (req, res) 
   res.status(201).json(doc);
 });
 
+vendorDocumentRouter.post("/fill-from-documents", async (req, res) => {
+  res.json(await documentService.fillVendorFromDocuments(vendorIdOf(req)));
+});
+
 vendorDocumentRouter.post("/compare", async (req, res) => {
   const comparison = await documentService.compareVendor(vendorIdOf(req));
   await evaluateVendor(comparison.vendorId);
