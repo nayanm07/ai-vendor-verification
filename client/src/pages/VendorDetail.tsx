@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { StatusBadge } from '../components/StatusBadge'
+import { Icon } from '../components/Icon'
 import { VendorForm } from '../components/VendorForm'
 import { VersionHistory } from '../components/VersionHistory'
 import { DocumentsTab } from '../components/DocumentsTab'
@@ -33,11 +34,13 @@ export function VendorDetail() {
 
   return (
     <div>
-      <Link to="/">← All vendors</Link>
+      <Link to="/" className="back-link">
+        <Icon name="arrow_back" size={16} /> All vendors
+      </Link>
       <div className="page-head">
         <h1>{vendor.companyName}</h1>
         <StatusBadge value={vendor.status} />
-        <span className="muted">v{vendor.currentVersion}</span>
+        <span className="mono-chip">v{vendor.currentVersion}</span>
       </div>
 
       <nav className="tabs">

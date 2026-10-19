@@ -21,5 +21,10 @@ const LABELS: Record<string, string> = {
 }
 
 export function StatusBadge({ value }: { value: string }) {
-  return <span className={`badge badge-${value.toLowerCase()}`}>{LABELS[value] ?? value}</span>
+  return (
+    <span className={`badge badge-${value.toLowerCase()}`}>
+      <span className="dot" />
+      {LABELS[value] ?? value}
+    </span>
+  )
 }
